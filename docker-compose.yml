@@ -1,0 +1,28 @@
+# Üç repo yan yana klonlanmış olmalı:
+#   sehir-simulator-backend/  sehir-simulator-frontend/  sehir-simulator-infrastructure/
+services:
+  backend:
+    build: ../sehir-simulator-backend
+    container_name: sehir-backend
+    environment:
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+    volumes:
+      - ../sehir-simulator-backend/veri:/app/veri   # indirilen veriler kalıcı
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"                 # Swagger: http://localhost:8000/docs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/saglik')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  frontend:
+    build: ../sehir-simulator-frontend
+    container_name: sehir-frontend
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"                  # Uygulama: http://localhost:8080
+    restart: unless-stopped
